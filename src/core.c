@@ -1,5 +1,9 @@
 #include "mu3io_bsod.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
 #ifdef DEBUG
 #   define println(...)                        \
         fprintf(stderr, "[%s] ", DRIVER_NAME), \
@@ -16,7 +20,6 @@ static const int PRODUCT_ID = 0x1216;
 static libusb_device_handle* dev_handle = NULL;
 static libusb_hotplug_callback_handle callback_handle = -1;
 
-int init();
 static void clean_up();
 static void print_ontroller_status(int);
 static int hotplug_callback(
@@ -49,7 +52,7 @@ int init()
             PRODUCT_ID,
             LIBUSB_HOTPLUG_MATCH_ANY,
             hotplug_callback,
-            NULL, // user data
+            (void*)4,
             &callback_handle
         );
         println("hotplug: %d", rc);
@@ -75,42 +78,48 @@ static void clean_up()
     libusb_exit(NULL);
 }
 
-static void print_ontroller_status(int rc)
-{
-    if(rc == LIBUSB_ERROR_ACCESS) {
-        fprintf(stderr, "[%s] access to ontroller denied; check udev rules\n", DRIVER_NAME);
-    } else if(rc != 0) {
-        fprintf(stderr, "[%s] libusb_open: %d\n", DRIVER_NAME, rc);
-    } else {
-        fprintf(stderr, "[%s] ONTROLLER connected\n", DRIVER_NAME);
-    }
-}
-
 static int hotplug_callback(
     libusb_context*,
     libusb_device* dev,
     libusb_hotplug_event event,
-    void*
+    void* retry_count
 ){
     println("hotplug");
 
     struct libusb_device_descriptor desc;
-    int rc;
-
     libusb_get_device_descriptor(dev, &desc);
 
-    if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
-        rc = libusb_open(dev, &dev_handle);
-        print_ontroller_status(rc);
-    } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
-        if(dev_handle) {
-            libusb_close(dev_handle);
-            dev_handle = NULL;
-            fprintf(stderr, "[%s] ONTROLLER disconnected\n", DRIVER_NAME);
+    if(event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED && !dev_handle) {
+        int rc = libusb_open(dev, &dev_handle);
+        if(rc == LIBUSB_ERROR_ACCESS && (long)retry_count > 0) {
+            // I don't know why
+            // it sometimes errors out even though it should have access
+            // this is yet to be investigated
+            return hotplug_callback(NULL, dev, event, retry_count - 1);
         }
+        print_ontroller_status(rc);
+    } else if(event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT && dev_handle) {
+        libusb_close(dev_handle);
+        dev_handle = NULL;
+        fprintf(stderr, "[%s] ONTROLLER disconnected\n", DRIVER_NAME);
     } else {
         println("Unhandled event %d", event);
     }
 
     return 0;
+}
+
+static void print_ontroller_status(int rc)
+{
+    if(rc == LIBUSB_ERROR_ACCESS) {
+        fprintf(
+            stderr,
+            "[%s] access to ontroller denied; check udev rules\n",
+            DRIVER_NAME
+        );
+    } else if(rc != 0) {
+        fprintf(stderr, "[%s] libusb_open: %d\n", DRIVER_NAME, rc);
+    } else {
+        fprintf(stderr, "[%s] ONTROLLER connected\n", DRIVER_NAME);
+    }
 }

@@ -1,5 +1,7 @@
 #include "mu3io_bsod.h"
 
+#include <string.h>
+
 static uint8_t lflag = 0;
 static uint8_t rflag = 0;
 static uint8_t mflag = 0;
@@ -25,13 +27,12 @@ int poll()
     memset(data, 0, sizeof(data));
 
     int rc = libusb_bulk_transfer(dev_handle, 0x84, data, sizeof(data), NULL, 0);
-    if(rc != 0) {
-        return 1;
+    if(rc) {
+        return rc;
     }
 
-    rc = rc && data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x54;
-
-    if(rc != 0) {
+    rc = data[0] != 0x44 || data[1] != 0x44 || data[2] != 0x54;
+    if(rc) {
         return 1;
     }
 
@@ -68,15 +69,18 @@ int poll()
     return 0;
 }
 
-void get_opbtns(uint8_t* opbtn) {
+void get_opbtns(uint8_t* opbtn)
+{
     *opbtn = mflag;
 }
 
-void get_gamebtns(uint8_t* left, uint8_t* right) {
+void get_gamebtns(uint8_t* left, uint8_t* right)
+{
     *left = lflag;
     *right = rflag;
 }
 
-void get_lever(int16_t* pos) {
+void get_lever(int16_t* pos)
+{
     *pos = lever;
 }
