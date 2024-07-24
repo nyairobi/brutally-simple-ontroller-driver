@@ -1,0 +1,8 @@
+@ stdcall mu3_io_get_api_version()
+@ stdcall mu3_io_init()
+@ stdcall mu3_io_poll()
+@ stdcall mu3_io_get_opbtns()
+@ stdcall mu3_io_get_gamebtns()
+@ stdcall mu3_io_get_lever()
+@ stdcall mu3_io_led_init()
+@ stdcall mu3_io_led_set_colors()

@@ -1,0 +1,116 @@
+#include "mu3io_bsod.h"
+
+#ifdef DEBUG
+#   define println(...)                        \
+        fprintf(stderr, "[%s] ", DRIVER_NAME), \
+        fprintf(stderr, __VA_ARGS__),          \
+        fprintf(stderr, "\n")
+#else
+#   define println(...)
+#endif
+
+static const char* DRIVER_NAME = "mu3io-bsod";
+static const int VENDOR_ID = 0x0E8F;
+static const int PRODUCT_ID = 0x1216;
+
+static libusb_device_handle* dev_handle = NULL;
+static libusb_hotplug_callback_handle callback_handle = -1;
+
+int init();
+static void clean_up();
+static void print_ontroller_status(int);
+static int hotplug_callback(
+    libusb_context*, libusb_device*,
+    libusb_hotplug_event, void*
+);
+
+libusb_device_handle* get_dev_handle()
+{
+    return dev_handle;
+}
+
+int init()
+{
+    println("init");
+
+    int rc = libusb_init_context(NULL, NULL, 0);
+    if(rc != 0) {
+        println("libusb_init: %d", rc);
+        return rc;
+    }
+
+    if(libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
+        rc = libusb_hotplug_register_callback(
+            NULL,
+            LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED
+                | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT,
+            LIBUSB_HOTPLUG_ENUMERATE,
+            VENDOR_ID,
+            PRODUCT_ID,
+            LIBUSB_HOTPLUG_MATCH_ANY,
+            hotplug_callback,
+            NULL, // user data
+            &callback_handle
+        );
+        println("hotplug: %d", rc);
+    } else {
+        rc = 1;
+        println("hotplug unavailable");
+    }
+
+    atexit(clean_up);
+    return rc;
+}
+
+static void clean_up()
+{
+    println("clean up");
+
+    if(dev_handle) {
+        libusb_close(dev_handle);
+    }
+    if(callback_handle >= 0) {
+        libusb_hotplug_deregister_callback(NULL, callback_handle);
+    }
+    libusb_exit(NULL);
+}
+
+static void print_ontroller_status(int rc)
+{
+    if(rc == LIBUSB_ERROR_ACCESS) {
+        fprintf(stderr, "[%s] access to ontroller denied; check udev rules\n", DRIVER_NAME);
+    } else if(rc != 0) {
+        fprintf(stderr, "[%s] libusb_open: %d\n", DRIVER_NAME, rc);
+    } else {
+        fprintf(stderr, "[%s] ONTROLLER connected\n", DRIVER_NAME);
+    }
+}
+
+static int hotplug_callback(
+    libusb_context*,
+    libusb_device* dev,
+    libusb_hotplug_event event,
+    void*
+){
+    println("hotplug");
+
+    struct libusb_device_descriptor desc;
+    int rc;
+
+    libusb_get_device_descriptor(dev, &desc);
+
+    if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
+        rc = libusb_open(dev, &dev_handle);
+        print_ontroller_status(rc);
+    } else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
+        if(dev_handle) {
+            libusb_close(dev_handle);
+            dev_handle = NULL;
+            fprintf(stderr, "[%s] ONTROLLER disconnected\n", DRIVER_NAME);
+        }
+    } else {
+        println("Unhandled event %d", event);
+    }
+
+    return 0;
+}
