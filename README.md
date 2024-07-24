@@ -1,8 +1,6 @@
 ## Brutally Simple Ontroller Driver
 
-This is a segatools io4 module for [ONTROLLER](https://www.dj-dao.com/en/ontroller) written in C with libusb. The name is supposed to scare Windows users off; you probably want to use [Mu3IO.NET](https://github.com/SirusDoma/Mu3IO.NET). If you want to play the game with a keyboard on Linux, you also want to use Mu3IO.NET.
-
-WIP, LEDs are unimplemented.
+This is a segatools io4 module for [ONTROLLER](https://www.dj-dao.com/en/ontroller) written in C with libusb. The name is supposed to scare Windows users off; you probably want to use [Mu3IO.NET](https://github.com/SirusDoma/Mu3IO.NET). If you want to play with a keyboard on Linux, you also want to use Mu3IO.NET.
 
 ### Why
 
@@ -29,3 +27,7 @@ Add `mu3io_bsod.dll` and `mu3io_bsod.so` to the game directory and point at the 
 [mu3io]
 path=mu3io_bsod.dll
 ```
+
+### Known issues
+* LEDs are not implemented yet.
+* Screensaver inhibition is not implemented yet.
