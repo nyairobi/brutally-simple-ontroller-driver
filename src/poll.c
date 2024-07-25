@@ -2,15 +2,18 @@
 
 #include <string.h>
 
-static uint8_t lflag = 0;
-static uint8_t rflag = 0;
-static uint8_t mflag = 0;
-static uint16_t lever = 0;
+static const int MIN_LEVER = 100;
+static const int MAX_LEVER = 600;
 
-static inline void apply_flag(uint8_t in, uint8_t bit, uint8_t target, uint8_t* output)
+static uint8_t g_lflag = 0;
+static uint8_t g_rflag = 0;
+static uint8_t g_mflag = 0;
+static uint16_t g_lever = 0;
+
+static inline void apply_flag(uint8_t in, uint8_t bit, uint8_t target, uint8_t* out)
 {
     if(in & bit) {
-        *output |= target;
+        *out |= target;
     }
 }
 
@@ -36,51 +39,49 @@ int poll()
         return 1;
     }
 
-    lflag = 0;
-    rflag = 0;
-    mflag = 0;
+    g_lflag = 0;
+    g_rflag = 0;
+    g_mflag = 0;
 
-    apply_flag(data[3], 0x20, 0x01, &lflag);
-    apply_flag(data[3], 0x10, 0x02, &lflag);
-    apply_flag(data[3], 0x08, 0x04, &lflag);
+    apply_flag(data[3], 0x20, 0x01, &g_lflag);
+    apply_flag(data[3], 0x10, 0x02, &g_lflag);
+    apply_flag(data[3], 0x08, 0x04, &g_lflag);
 
-    apply_flag(data[4], 0x80, 0x08, &lflag);
-    apply_flag(data[4], 0x20, 0x10, &lflag);
+    apply_flag(data[4], 0x80, 0x08, &g_lflag);
+    apply_flag(data[4], 0x20, 0x10, &g_lflag);
 
-    apply_flag(data[3], 0x04, 0x01, &rflag);
-    apply_flag(data[3], 0x02, 0x02, &rflag);
-    apply_flag(data[3], 0x01, 0x04, &rflag);
+    apply_flag(data[3], 0x04, 0x01, &g_rflag);
+    apply_flag(data[3], 0x02, 0x02, &g_rflag);
+    apply_flag(data[3], 0x01, 0x04, &g_rflag);
 
-    apply_flag(data[4], 0x40, 0x08, &rflag);
-    apply_flag(data[4], 0x10, 0x10, &rflag);
+    apply_flag(data[4], 0x40, 0x08, &g_rflag);
+    apply_flag(data[4], 0x10, 0x10, &g_rflag);
 
-    apply_flag(data[4], 0x08, 0x01, &mflag);
-    apply_flag(data[4], 0x04, 0x02, &mflag);
+    apply_flag(data[4], 0x08, 0x01, &g_mflag);
+    apply_flag(data[4], 0x04, 0x02, &g_mflag);
 
-    static const int min_lever = 100;
-    static const int max_lever = 600;
-    static const double abs_center = (double)(min_lever + max_lever) / 2.0;
-    static const double range_center = (double)(min_lever - max_lever) / 2.0;
+    static const double abs_center = (double)(MIN_LEVER + MAX_LEVER) / 2.0;
+    static const double range_center = (double)(MIN_LEVER - MAX_LEVER) / 2.0;
 
-    lever = (max_lever + min_lever) - ((uint8_t)data[6] | ((uint16_t)data[5] << 8));
-    double normalized = (lever - abs_center) / range_center;
-    lever = (uint16_t)(SHRT_MAX * normalized);
+    g_lever = (MAX_LEVER + MIN_LEVER) - ((uint8_t)data[6] | ((uint16_t)data[5] << 8));
+    double normalized = (g_lever - abs_center) / range_center;
+    g_lever = (uint16_t)(SHRT_MAX * normalized);
 
     return 0;
 }
 
 void get_opbtns(uint8_t* opbtn)
 {
-    *opbtn = mflag;
+    *opbtn = g_mflag;
 }
 
 void get_gamebtns(uint8_t* left, uint8_t* right)
 {
-    *left = lflag;
-    *right = rflag;
+    *left = g_lflag;
+    *right = g_rflag;
 }
 
 void get_lever(int16_t* pos)
 {
-    *pos = lever;
+    *pos = g_lever;
 }
