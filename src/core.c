@@ -1,8 +1,8 @@
-#include "mu3io_bsod.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "mu3io_bsod.h"
 
 static const int VENDOR_ID = 0x0E8F;
 static const int PRODUCT_ID = 0x1216;
@@ -24,8 +24,6 @@ libusb_device_handle* get_dev_handle()
 
 int init()
 {
-    println("init");
-
     int rc = libusb_init_context(NULL, NULL, 0);
     if(rc != 0) {
         println("libusb_init: %d", rc);
@@ -45,7 +43,9 @@ int init()
             (void*)4,
             &g_callback_handle
         );
-        println("hotplug: %d", rc);
+        if(rc != 0) {
+            println("failed to register hotplug: %d", rc);
+        }
     } else {
         rc = 1;
         println("hotplug unavailable");
@@ -57,7 +57,7 @@ int init()
 
 static void clean_up()
 {
-    println("clean up");
+    println("clean_up");
 
     if(g_dev_handle) {
         libusb_close(g_dev_handle);
@@ -74,7 +74,7 @@ static int hotplug_callback(
     libusb_hotplug_event event,
     void* retry_count
 ){
-    println("hotplug");
+    println("hotplug_callback");
     (void)ctx;
 
     struct libusb_device_descriptor desc;
@@ -97,7 +97,7 @@ static int hotplug_callback(
         g_dev_handle = NULL;
         fprintf(stderr, "[%s] ONTROLLER disconnected\n", DRIVER_NAME);
     } else {
-        println("Unhandled event %d", event);
+        println("unhandled event %d", event);
     }
 
     return 0;

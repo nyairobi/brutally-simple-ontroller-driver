@@ -1,6 +1,6 @@
-#include "mu3io_bsod.h"
-
 #include <string.h>
+
+#include "mu3io_bsod.h"
 
 static const int MIN_LEVER = 100;
 static const int MAX_LEVER = 600;
@@ -19,6 +19,14 @@ static inline void apply_flag(uint8_t in, uint8_t bit, uint8_t target, uint8_t* 
 
 int poll()
 {
+#ifdef DEBUG
+    static int d_cnt = 0;
+    if(++d_cnt > 100) {
+        println("poll");
+        d_cnt = 0;
+    }
+#endif
+
     libusb_handle_events_completed(NULL, NULL);
 
     libusb_device_handle* dev_handle = get_dev_handle();
@@ -66,6 +74,12 @@ int poll()
     g_lever = (MAX_LEVER + MIN_LEVER) - ((uint8_t)data[6] | ((uint16_t)data[5] << 8));
     double normalized = (g_lever - abs_center) / range_center;
     g_lever = (uint16_t)(SHRT_MAX * normalized);
+
+    static int cnt = 0;
+
+    if((cnt = !cnt)) {
+        led_write(dev_handle);
+    }
 
     return 0;
 }
