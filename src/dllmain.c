@@ -20,8 +20,6 @@ BOOL WINAPI DllMain(HINSTANCE p1, DWORD p2, LPVOID p3)
     UNREFERENCED_PARAMETER(p2);
     UNREFERENCED_PARAMETER(p3);
 
-    println("DllMain");
-
     so = dlopen("./mu3io_bsod.so", RTLD_NOW);
     if(so) {
         init = dlsym(so, "init");
@@ -42,7 +40,6 @@ BOOL WINAPI DllMain(HINSTANCE p1, DWORD p2, LPVOID p3)
             led_set_colors;
 
         if(rv) {
-            println("init successful");
             return TRUE;
         } else {
             println("init failed: missing symbols");
@@ -67,13 +64,6 @@ HRESULT WINAPI mu3_io_init(void)
 
 HRESULT WINAPI mu3_io_poll(void)
 {
-#ifdef DEBUG
-    static int cnt = 0;
-    if(++cnt > 100) {
-        cnt = 0;
-        println("mu3_io_poll");
-    }
-#endif
     return poll() == 0 ? S_OK : E_FAIL;
 }
 

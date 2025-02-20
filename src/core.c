@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
+#include "dbus.h"
 #include "mu3io_bsod.h"
 
 static const int VENDOR_ID = 0x0E8F;
@@ -28,6 +30,12 @@ int init()
     if(rc != 0) {
         println("libusb_init: %d", rc);
         return rc;
+    }
+
+    rc = dbus_init();
+    if(rc < 0) {
+        println("dbus_init: %s", strerror(-rc));
+        return -rc;
     }
 
     if(libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
@@ -66,6 +74,7 @@ static void clean_up()
         libusb_hotplug_deregister_callback(NULL, g_callback_handle);
     }
     libusb_exit(NULL);
+    dbus_exit();
 }
 
 static int hotplug_callback(
@@ -73,7 +82,8 @@ static int hotplug_callback(
     libusb_device* dev,
     libusb_hotplug_event event,
     void* retry_count
-){
+)
+{
     println("hotplug_callback");
     (void)ctx;
 

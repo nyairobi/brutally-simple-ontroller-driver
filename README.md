@@ -1,10 +1,10 @@
 ## Brutally Simple Ontroller Driver
 
-This is a segatools io4 module for [ONTROLLER](https://www.dj-dao.com/en/ontroller) written in C with libusb. The name is supposed to scare Windows users off; you probably want to use [Mu3IO.NET](https://github.com/SirusDoma/Mu3IO.NET). If you want to play with a keyboard on Linux, you also want to use Mu3IO.NET.
+This is a segatools io4 module for [ONTROLLER](https://www.dj-dao.com/en/ontroller) written in C with libusb. The name is supposed to scare off Windows users; you probably want to use [Mu3IO.NET](https://github.com/SirusDoma/Mu3IO.NET). If you play with a keyboard on Linux, you also want Mu3IO.NET.
 
 ### Why
 
-Because the existing solutions didn't work on Linux in HID mode. Winusb [seems to be unimplemented](https://wiki.winehq.org/Hardware). It doesn't help that Mu3IO.NET is made specifically for .NET AOT which can't even be cross-compiled on Linux. 
+Because the existing solutions didn't work on Linux in HID mode. Winusb [seems to be unimplemented](https://wiki.winehq.org/Hardware). It doesn't help that Mu3IO.NET is made specifically for .NET AOT which can't be cross-compiled on Linux.
 
 ### How it works
 
@@ -29,5 +29,4 @@ path=mu3io_bsod.dll
 ```
 
 ### Known issues
-* LEDs are not implemented yet.
-* Screensaver inhibition is not implemented yet.
+* WAD LEDs don't work

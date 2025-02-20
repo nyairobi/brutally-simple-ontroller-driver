@@ -1,9 +1,11 @@
 #include <string.h>
 
 #include "mu3io_bsod.h"
+#include "dbus.h"
 
 static const int MIN_LEVER = 100;
 static const int MAX_LEVER = 600;
+static const int POLLS_PER_HEARTBEAT = 400;
 
 static uint8_t g_lflag = 0;
 static uint8_t g_rflag = 0;
@@ -17,16 +19,19 @@ static inline void apply_flag(uint8_t in, uint8_t bit, uint8_t target, uint8_t* 
     }
 }
 
+static void heartbeat()
+{
+    static int poll_cnt = 0;
+    if(++poll_cnt > POLLS_PER_HEARTBEAT) {
+        poll_cnt = 0;
+        println("poll heartbeat");
+        dbus_inhibit();
+    }
+}
+
 int poll()
 {
-#ifdef DEBUG
-    static int d_cnt = 0;
-    if(++d_cnt > 100) {
-        println("poll");
-        d_cnt = 0;
-    }
-#endif
-
+    heartbeat();
     libusb_handle_events_completed(NULL, NULL);
 
     libusb_device_handle* dev_handle = get_dev_handle();

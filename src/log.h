@@ -1,3 +1,5 @@
+#pragma once
+
 #define DRIVER_NAME "mu3io-bsod"
 
 #ifdef DEBUG
@@ -13,9 +15,9 @@ void do_print(const char*);
         fprintf(stderr, "[%s] [%s] ", DRIVER_NAME, program_invocation_name), \
         fprintf(stderr, __VA_ARGS__),                                        \
         fprintf(stderr, "\n");                                               \
-        char buf[500];                                                       \
-        sprintf(buf, __VA_ARGS__),                                           \
-        do_print(buf)
+        char _lbuf[500];                                                     \
+        sprintf(_lbuf, __VA_ARGS__),                                         \
+        do_print(_lbuf)
 
 #else
 
