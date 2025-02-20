@@ -1,0 +1,25 @@
+name: Artifact
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: sudo apt install -y wine64-tools libusb-1.0-0-dev libsystemd-dev
+    - name: Build
+      run: make
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mu3io_bsod
+        path: |
+          lib/mu3io_bsod.dll
+          lib/mu3io_bsod.so
